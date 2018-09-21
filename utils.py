@@ -72,7 +72,9 @@ def conv_down_size(size, kernel_size, stride, padding):
 def deconv_up_size(size, kernel_size, stride, padding, outpad=0):
     return (size-1)*stride + kernel_size - 2*padding + outpad
     
-    
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
 
 class PartialConv2d(nn.modules.conv._ConvNd):
     def __init__(self, in_channels, out_channels, kernel_size, 
@@ -115,3 +117,28 @@ class PartialConv2d(nn.modules.conv._ConvNd):
         
         
         return image_conv, new_mask
+        
+class LpLoss(nn.modules.loss._Loss):
+    """
+    take Lp norm of predict - target
+    
+    """
+    def __init__(self, p, reduction='elementwise_mean'):
+        
+        super(LpLoss, self).__init__(reduction=reduction)
+        assert p >= 0
+        self.p = p
+        self.reduction = reduction
+
+    def forward(self, predict, target):
+        assert not target.requires_grad
+        shape_of_input = predict.shape
+        predict = predict.reshape(predict.shape[0], -1)
+        target = target.reshape(target.shape[0], -1)
+        loss = predict - target
+        loss = loss.norm(dim=1, p=self.p)
+        if self.reduction == 'elementwise_mean':
+            loss = loss.mean(dim=0)
+        elif self.reduction == 'sum':
+            loss = loss.sum(dim=0)
+        return loss
