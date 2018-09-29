@@ -136,7 +136,7 @@ class LpLoss(nn.modules.loss._Loss):
         predict = predict.reshape(predict.shape[0], -1)
         target = target.reshape(target.shape[0], -1)
         loss = predict - target
-        loss = loss.norm(dim=1, p=self.p)**p
+        loss = loss.norm(dim=1, p=self.p)**self.p
         if self.reduction == 'elementwise_mean':
             loss = loss.mean(dim=0)
         elif self.reduction == 'sum':
