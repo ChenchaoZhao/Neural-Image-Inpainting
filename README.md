@@ -1,1 +1,1 @@
-# Neural Image Inpainting
+# Neural Camouflage
