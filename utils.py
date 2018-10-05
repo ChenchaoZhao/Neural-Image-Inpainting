@@ -28,7 +28,6 @@ def generate_random_mask(width, height, lines=1, spots=1, ellipses=1, scale=5.0)
                      1, 
                      thickness[idx]
                     )
-
     # draw spots
     if spots > 1:
         x0 = np.random.randint(0, width, size=spots)
@@ -37,8 +36,6 @@ def generate_random_mask(width, height, lines=1, spots=1, ellipses=1, scale=5.0)
         
         for idx in range(spots):
             cv2.circle(mask, (x0[idx], y0[idx]), radius[idx], 1, -1)
-        
-        
     # draw ellipse
     if ellipses > 1:
         x = np.random.randint(width//2-width//4, width//2+width//4, size=ellipses)
@@ -73,72 +70,24 @@ def deconv_up_size(size, kernel_size, stride, padding, outpad=0):
     return (size-1)*stride + kernel_size - 2*padding + outpad
     
 
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
-
-class PartialConv2d(nn.modules.conv._ConvNd):
-    def __init__(self, in_channels, out_channels, kernel_size, 
-                 stride=1, padding=0, dilation=1, groups=1, bias=True):
-        
-        with torch.no_grad():
-            self.mask_weight = torch.ones(1, # out channel
-                                          1, # in channel
-                                          kernel_size, 
-                                          kernel_size,
-                                          dtype=torch.float
-                                         )/(kernel_size)**2
-            self.mask_weight = self.mask_weight.to(device)
-            
-#             print(self.mask_weight.dtype)
-        
-        kernel_size = _pair(kernel_size)
-        stride = _pair(stride)
-        padding = _pair(padding)
-        dilation = _pair(dilation)
-        super(PartialConv2d, self).__init__(
-            in_channels, out_channels, kernel_size, stride, padding, dilation,
-            False, _pair(0), groups, bias)
-
-    def forward(self, image, mask):
-        assert mask.shape[0] == 1
-        assert mask.shape[1] == 1
-        assert image.shape[1] >= image.shape[1]
-        assert image.shape[2:] == mask.shape[2:] # image: (batch, channel, w, h)
-        with torch.no_grad():
-            mask_conv = F.conv2d(mask.float(), self.mask_weight, None, self.stride,
-                            self.padding, self.dilation, self.groups)
-            new_mask = mask_conv > 0
-        
-        image_hole = image * mask.float() # 0 for hole pixels, 1 for non-hole
-        image_conv = F.conv2d(image_hole, self.weight, self.bias, self.stride,
-                        self.padding, self.dilation, self.groups)
-        
-        image_conv = image_conv * mask_conv # re-weight the non-hole pixels
-        
-        
-        return image_conv, new_mask
-        
-class LpLoss(nn.modules.loss._Loss):
-    """
-    take Lp norm of predict - target
+def imshow(torch_image, mask=None):
+    img = torch_image.detach().permute((1,2,0))
+    img -= img.min()
+    img /= img.max()
+    if mask is not None:
+        img = (img + (1-mask[0,:,:,:].permute((1,2,0)))*100).clamp(0,1)
+    plt.figure()
+    #print(img.min(), img.max())
+    plt.imshow((img*2.5).clamp(0,1))
     
-    """
-    def __init__(self, p, reduction='elementwise_mean'):
-        
-        super(LpLoss, self).__init__(reduction=reduction)
-        assert p >= 0
-        self.p = p
-        self.reduction = reduction
-
-    def forward(self, predict, target):
-        assert not target.requires_grad
-        shape_of_input = predict.shape
-        predict = predict.reshape(predict.shape[0], -1)
-        target = target.reshape(target.shape[0], -1)
-        loss = predict - target
-        loss = loss.norm(dim=1, p=self.p)**self.p
-        if self.reduction == 'elementwise_mean':
-            loss = loss.mean(dim=0)
-        elif self.reduction == 'sum':
-            loss = loss.sum(dim=0)
-        return loss
+def paint_mask(list_of_coords_radii, size=(256, 256)):
+    mask = np.zeros(size)
+    for x, y, r in list_of_coords_radii:
+        mask = cv2.circle(mask, (x, y), r, 1, -1)
+    return 1 - mask.clip(0,1)
+    
+def polish_output(image, output, mask, blur=12):
+    mask = mask.cpu().numpy()[0,0,:,:]
+    mask = cv2.blur(mask, (blur, blur))
+    mask = torch.from_numpy(mask).to(device)
+    return output*(1-mask) + image*mask
