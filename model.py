@@ -1,11 +1,12 @@
 import numpy as np
 import cv2
 import torch
-import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision import models
 from torch.nn.modules.utils import _pair
+import torchvision
+from torchvision import models
+
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
