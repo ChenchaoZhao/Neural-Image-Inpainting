@@ -155,7 +155,6 @@ class PConvNet(nn.Module):
     
     def forward(self, img, msk):
         img = img*msk.float()
-        img = img * msk
         img_, msk_ = self.encoder(img, msk)
         out = self.decoder(img_, msk_)
         return out
