@@ -1,14 +1,14 @@
-import torch 
-import torchvision
+from PIL import Image
+import numpy as np
+import cv2
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
-import torchvision.transforms as transforms
+import torchvision
 from torchvision import models
+import torchvision.transforms as transforms
 
-import numpy as np
-import matplotlib.pyplot as plt
-import cv2
 
 from utils import *
 from model import *
@@ -31,7 +31,6 @@ c1_hole = LpLoss(1)
 c1_nonh = LpLoss(1)
 c2_hole = LpLoss(2)
 c2_nonh = LpLoss(2)
-# c2_rgb = LpLoss(2)
 
 feature_map = FeatureMaps(['4', '9', '16']).to(device).eval()
 

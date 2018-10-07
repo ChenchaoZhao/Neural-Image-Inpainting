@@ -163,16 +163,16 @@ class PConvNet(nn.Module):
 class SpacenetDataset(torch.utils.data.Dataset):
     def __init__(self, train=True):
         if train:
-            path = "paris_train_small_pic/test/"
+            path = "data/test/"
         else:
-            path = "paris_train_medium_pic/"
+            path = "data/train/"
             
         self.path = path
         self.filelist = os.listdir(path)
         mean_ = [0.2225, 0.3023, 0.2781]
         std_ = [0.1449, 0.1839, 0.1743] 
         self.transform = transforms.Compose([
-            transforms.Resize((256, 256))
+            transforms.Resize((256, 256)),
             transforms.ToTensor(),
             transforms.Normalize(mean_, std_)
         ])

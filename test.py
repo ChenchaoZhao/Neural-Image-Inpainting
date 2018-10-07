@@ -1,14 +1,15 @@
-import torch 
-import torchvision
-import torch.nn as nn
-import torch.nn.functional as F
 from PIL import Image
-import torchvision.transforms as transforms
-from torchvision import models
-
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+import torchvision
+import torchvision.transforms as transforms
+from torchvision import models
 
 from utils import *
 from model import *

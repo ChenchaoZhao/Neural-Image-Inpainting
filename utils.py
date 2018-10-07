@@ -1,10 +1,9 @@
 import numpy as np
 import cv2
-import torch, torchvision
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# from PIL import Image
-from torch.nn.modules.utils import _pair
+import torchvision
 
 def generate_random_mask(width, height, lines=1, spots=1, ellipses=1, scale=5.0):
     mask = np.zeros((height, width, 1), dtype=np.uint8)
