@@ -10,8 +10,8 @@ On the one hand, it is necessary to completely hide details in secret facilities
 
 To tackle this delimma, I applied the technology of photo retouching to satellite images where the sensity structures were replaced by textures mimicing the surrounding structures. This process was automated using a dense [partial convolutional](https://arxiv.org/pdf/1804.07723.pdf) neural network.
 
-![The mask over sensitive structures](images/mask.png)
-![Sensitive structures were inpainted with tree textures](images/after.png)
+![The mask over sensitive structures](images/mask.jpg)
+![Sensitive structures were inpainted with tree textures](images/after.jpg)
 
 
 
