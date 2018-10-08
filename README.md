@@ -6,7 +6,13 @@ Google Earth made sophisticated satellite images accessible to anyone with a dig
 
 On the one hand, it is necessary to completely hide details in secret facilities. Usually those locations are censored with single-color or pixelation patches which do not blend in with surrounding structures. On the other hand, such "cover-ups" often raise people's curiosity and attract more public attention.
 
+![black_hole](/Users/joseph/Downloads/black_hole.jpeg)
+
+![taiwan](/Users/joseph/Downloads/taiwan.png)
+
 To tackle this delimma, I applied the technology of photo retouching to satellite images where the sensity structures were replaced by textures mimicing the surrounding structures. This process was automated using a dense [partial convolutional](https://arxiv.org/pdf/1804.07723.pdf) neural network.
+
+
 
 # My Model
 
@@ -32,8 +38,8 @@ class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0,
 
 ### Shape:
 
-- Input: image `(batch, in channel, height, width)` and mask `(1, 1, height, width)`
-- Ouput: feature map `(batch, out channel, new height, new width)` and mask `(1, 1, new height, new width)`
+- **Input**: image `(batch, in channel, height, width)` and mask `(1, 1, height, width)`
+- **Output**: feature map `(batch, out channel, new height, new width)` and mask `(1, 1, new height, new width)`
 
 ### Variables:
 
