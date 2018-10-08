@@ -10,13 +10,8 @@ On the one hand, it is necessary to completely hide details in secret facilities
 
 To tackle this delimma, I applied the technology of photo retouching to satellite images where the sensity structures were replaced by textures mimicing the surrounding structures. This process was automated using a dense [partial convolutional](https://arxiv.org/pdf/1804.07723.pdf) neural network.
 
-
-
-![mask](images/mask.png)
-
-
-
-# ![after](images/after.png)
+![The mask over sensitive structures](images/mask.png)
+![Sensitive structures were inpainted with tree textures](images/after.png)
 
 
 
@@ -57,6 +52,8 @@ class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0,
 ```python
 class PConvBlock(in_channel, out_channel, conv_para, pool_para)
 ```
+
+The input image and mask are passed to partial convolution and then partial batch normalization (avoiding the hole region).  The output feature map is then passed to a `ReLU` layer and `MaxPool2d` layer; the mask is downsampled with the same `MaxPool2d` layer.
 
 ### Parameters:
 
