@@ -6,6 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 
+
+
 def generate_random_mask(width, height, lines=1, spots=1, ellipses=1, scale=5.0):
     mask = np.zeros((height, width, 1), dtype=np.uint8)
     scale = max(width, height)*scale/100
@@ -70,7 +72,7 @@ def deconv_up_size(size, kernel_size, stride, padding, outpad=0):
     return (size-1)*stride + kernel_size - 2*padding + outpad
     
 
-def imshow(torch_image, mask=None):
+def imshow(torch_image, mask=None, brighten=1):
     img = torch_image.detach().permute((1,2,0))
     img -= img.min()
     img /= img.max()
@@ -78,7 +80,7 @@ def imshow(torch_image, mask=None):
         img = (img + (1-mask[0,:,:,:].permute((1,2,0)))*100).clamp(0,1)
     plt.figure()
     #print(img.min(), img.max())
-    plt.imshow((img*2.5).clamp(0,1))
+    plt.imshow((img*brighten).clamp(0,1))
     
 def paint_mask(list_of_coords_radii, size=(256, 256)):
     mask = np.zeros(size)
