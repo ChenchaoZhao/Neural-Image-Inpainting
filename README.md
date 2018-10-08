@@ -12,6 +12,14 @@ To tackle this delimma, I applied the technology of photo retouching to satellit
 
 
 
+![mask](images/mask.png)
+
+
+
+# ![after](images/after.png)
+
+
+
 # My Model
 
 The architecture is a modified version of [UNet](https://arxiv.org/pdf/1505.04597.pdf) where the encoding convolutional layers are replaced by partial convolutional layers together with partial batch normalization. The partial convolution layer takes (i) an image (or its feature map) with a hole, and (ii) the mask indicate the location of the hole; the output is a partial convolution feature map skipping the hole region and the mask for the remaing hole in the feature map.
@@ -32,12 +40,12 @@ class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0,
 - **dilation** ([*int*](https://docs.python.org/3/library/functions.html#int) *or* [*tuple*](https://docs.python.org/3/library/stdtypes.html#tuple)*,* *optional*) – Spacing between kernel elements. Default: 1
 - **groups** ([*int*](https://docs.python.org/3/library/functions.html#int)*,* *optional*) – Number of blocked connections from input channels to output channels. Default: 1
 - **bias** ([*bool*](https://docs.python.org/3/library/functions.html#bool)*,* *optional*) – If `True`, adds a learnable bias to the output. Default: `True`
-- **device** ([*class* `torch.device`](https://pytorch.org/docs/stable/tensor_attributes.html?highlight=device#torch.torch.device), *optional*) The device on which the mask tensor will be allocated. Default: `torch.device("cuda" if torch.cuda.is_available() else "cpu")`
+- **device** ([*class* `torch.device`](https://pytorch.org/docs/stable/tensor_attributes.html?highlight=device#torch.torch.device), *optional*) The device on which the mask tensor will be allocated. Default: `device = torch.device("cuda" if torch.cuda.is_available() else "cpu")`
 
 ### Shape:
 
-- **Input**: image `(batch, in channel, height, width)` and mask `(1, 1, height, width)`
-- **Output**: feature map `(batch, out channel, new height, new width)` and mask `(1, 1, new height, new width)`
+- **Input**: image `(batch, in_channel, height, width)` and mask `(1, 1, height, width)`
+- **Output**: feature map `(batch, out_channel, new_height, new_width)` and mask `(1, 1, new_height, new_width)`
 
 ### Variables:
 
@@ -46,7 +54,16 @@ class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0,
 
 ## Partial Convolution Block
 
-## Partial Convolution Network
+```python
+class PConvBlock(in_channel, out_channel, conv_para, pool_para)
+```
+
+### Parameters:
+
+- **in_channels** ([*int*](https://docs.python.org/3/library/functions.html#int)) – Number of channels in the input image
+- **out_channels** ([*int*](https://docs.python.org/3/library/functions.html#int)) – Number of channels produced by the convolution
+- **conv_para** ([*dict*](https://docs.python.org/3/library/stdtypes.html#mapping-types-dict)) – Parameters of partial convolution layer
+- **pool_para** ([*dict*](https://docs.python.org/3/library/stdtypes.html#mapping-types-dict)) – Paramters of max-pooling layer, see [*class* `torch.nn.MaxPool2d`](https://pytorch.org/docs/stable/nn.html#torch.nn.MaxPool2d)
 
 
 
