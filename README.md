@@ -6,9 +6,9 @@ Google Earth made sophisticated satellite images accessible to anyone with a dig
 
 On the one hand, it is necessary to completely hide details in secret facilities. Usually those locations are censored with single-color or pixelation patches which do not blend in with surrounding structures. On the other hand, such "cover-ups" often raise people's curiosity and attract more public attention.
 
-![black_hole](images/black_hole.jpeg)
+![black_hole](images/black_hole.jpeg =256x256)
 
-![taiwan](images/taiwan.png)
+![taiwan](images/taiwan.png =256x256)
 
 To tackle this delimma, I applied the technology of photo retouching to satellite images where the sensity structures were replaced by textures mimicing the surrounding structures. This process was automated using a dense [partial convolutional](https://arxiv.org/pdf/1804.07723.pdf) neural network.
 
