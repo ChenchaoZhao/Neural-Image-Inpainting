@@ -72,5 +72,20 @@ The input image and mask are passed to partial convolution and then partial batc
 - **weight** ([*Tensor*](https://pytorch.org/docs/stable/tensors.html#torch.Tensor)) – the learnable weights of the module of shape (out_channels, in_channels, kernel_size[0], kernel_size[1])
 - **bias** ([*Tensor*](https://pytorch.org/docs/stable/tensors.html#torch.Tensor)) – the learnable bias of the module of shape (out_channels)
 
+```python
+class PConvNet(n_hidden=8)
+```
 
+There are 8 partial convolution blocks `PConvBlock` downsampling the images, and 8 transposed convolution blocks reconstructing the images. Each transposed convolution is composed of the following:
 
+- `torch.nn.ConvTransposed2d` functions as reverse of `torch.nn.MaxPool` in the mirroring partial convolution block.
+- `torch.nn.BatchNorm2d` 2D Batch Normalization
+- `torch.nn.ConvTransposed2d` functions as reverse of `PartialConv2d`
+- `torch.nn.ReLU` ReLU layer
+- Concatinate the feature maps of the mirroring `PConvBlock` to the output of ReLU layer
+- Compress the concatinated feature maps using 1x1 convolution `torch.nn.Conv2d`
+
+### Shape:
+
+- **Input**: image `(batch, in_channel, height, width)` and mask`(1, 1, height, width)`
+- **Output**: image `(batch, in_channel, height, width)`
