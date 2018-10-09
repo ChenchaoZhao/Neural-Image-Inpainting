@@ -132,14 +132,19 @@ class PConvBlock(nn.Module):
 
 class PConvNet(nn.Module):
 	"""
-	There are 8 partial convolution blocks PConvBlock downsampling the images, and 8 transposed convolution blocks reconstructing the images. Each transposed convolution is composed of the following:
+	There are 8 partial convolution blocks PConvBlock downsampling the images, 
+	and 8 transposed convolution blocks reconstructing the images. 
+	Each transposed convolution is composed of the following:
 
-	- torch.nn.ConvTransposed2d functions as reverse of torch.nn.MaxPool in the mirroring partial convolution block.
+	- torch.nn.ConvTransposed2d functions as reverse of torch.nn.MaxPool 
+	  in the mirroring partial convolution block.
 	- torch.nn.BatchNorm2d 2D Batch Normalization
 	- torch.nn.ConvTransposed2d functions as reverse of PartialConv2d
 	- torch.nn.ReLU ReLU layer
-	- Concatinate the feature maps of the mirroring PConvBlock to the output of ReLU layer
-	- Compress the concatinated feature maps using 1x1 convolution torch.nn.Conv2d
+	- Concatinate the feature maps of the mirroring PConvBlock to the 
+	  output of ReLU layer
+	- Compress the concatinated feature maps using 1x1 convolution 
+	  torch.nn.Conv2d
 
 	Shape:
 
