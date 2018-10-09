@@ -62,5 +62,15 @@ The input image and mask are passed to partial convolution and then partial batc
 - **conv_para** ([*dict*](https://docs.python.org/3/library/stdtypes.html#mapping-types-dict)) – Parameters of partial convolution layer
 - **pool_para** ([*dict*](https://docs.python.org/3/library/stdtypes.html#mapping-types-dict)) – Paramters of max-pooling layer, see [*class* `torch.nn.MaxPool2d`](https://pytorch.org/docs/stable/nn.html#torch.nn.MaxPool2d)
 
+### Shape:
+
+- **Input**: image `(batch, in_channel, height, width)` and mask`(1, 1, height, width)`
+- **Output**: feature map `(batch, out_channel, new_height, new_width)` and mask `(1, 1, new_height, new_width)`
+
+### Variables:
+
+- **weight** ([*Tensor*](https://pytorch.org/docs/stable/tensors.html#torch.Tensor)) – the learnable weights of the module of shape (out_channels, in_channels, kernel_size[0], kernel_size[1])
+- **bias** ([*Tensor*](https://pytorch.org/docs/stable/tensors.html#torch.Tensor)) – the learnable bias of the module of shape (out_channels)
+
 
 

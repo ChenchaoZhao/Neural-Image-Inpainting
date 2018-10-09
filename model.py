@@ -12,6 +12,39 @@ from torchvision import models
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
 
 class PartialConv2d(nn.modules.conv._ConvNd):
+	'''
+	Parameters:
+
+	- in_channels (int) – Number of channels in the input image
+	- out_channels (int) – Number of channels produced by the convolution
+	- kernel_size (int or tuple) – Size of the convolving kernel
+	- stride (int or tuple, optional) – Stride of the convolution. Default: 1
+	- padding (int or tuple, optional) – Zero-padding added to both sides of 
+	  the input. Default: 0
+	- dilation (int or tuple, optional) – Spacing between kernel elements. 
+	  Default: 1
+	- groups (int, optional) – Number of blocked connections from input channels 
+	  to output channels. Default: 1
+	- bias (bool, optional) – If True, adds a learnable bias to the output. 
+	  Default: True
+	- device (class torch.device, optional) The device on which the mask tensor
+	  will be allocated. 
+	  Default: device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+	Shape:
+
+	- Input: image (batch, in_channel, height, width) and mask (1, 1, height, width)
+	- Output: feature map (batch, out_channel, new_height, new_width) and mask 
+	  (1, 1, new_height, new_width)
+
+	Variables:
+
+	- weight (Tensor) – the learnable weights of the module of shape (out_channels, 
+	  in_channels, kernel_size[0], kernel_size[1])
+	- bias (Tensor) – the learnable bias of the module of shape (out_channels)
+
+	'''
     def __init__(self, in_channels, out_channels, kernel_size, 
                  stride=1, padding=0, dilation=1, groups=1, bias=True,
                  device=device):
@@ -54,6 +87,31 @@ class PartialConv2d(nn.modules.conv._ConvNd):
         return image_conv, new_mask        
 
 class PConvBlock(nn.Module):
+	'''
+	The input image and mask are passed to partial convolution and then 
+	partial batch normalization (avoiding the hole region).  
+	The output feature map is then passed to a ReLU layer and MaxPool2d layer; 
+	the mask is downsampled with the same MaxPool2d layer.
+
+	Parameters:
+
+	- in_channels (int) – Number of channels in the input image
+	- out_channels (int) – Number of channels produced by the convolution
+	- conv_para (dict) – Parameters of partial convolution layer
+	- pool_para (dict) – Paramters of max-pooling layer, see 
+	  class torch.nn.MaxPool2d
+	Shape:
+	- Input: image (batch, in_channel, height, width) and mask 
+	  (1, 1, height, width)
+	- Output: feature map (batch, out_channel, new_height, new_width) 
+	  and mask (1, 1, new_height, new_width)
+	Variables:
+	- weight (Tensor) – the learnable weights of the module of shape 
+	  (out_channels, in_channels, kernel_size[0], kernel_size[1])
+	- bias (Tensor) – the learnable bias of the module of shape (out_channels)
+
+
+	'''
     def __init__(self, in_channel, out_channel, conv_para, pool_para):
         super(PConvBlock, self).__init__()
         self.pconv = PartialConv2d(in_channel, out_channel, **conv_para)
