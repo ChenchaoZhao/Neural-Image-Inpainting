@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Google Earth made sophisticated satellite images accessible to anyone with a digital device and internet connection. However, sensitive locations, which used to be well hidden from the public, were fully exposed. Thus, easy access to satellite images poses a potential threat to national security and privacy.
+Google Earth made sophisticated satellite images accessible to anyone with a digital device and internet connection. However, sensitive locations, which used to be well hidden from the public, were fully exposed. Thus, easy access to satellite images poses a potential threat to national security and personal privacy.
 
 On the one hand, it is necessary to completely hide details in secret facilities. Usually those locations are censored with single-color or pixelation patches which do not blend in with surrounding structures. On the other hand, such "cover-ups" often raise people's curiosity and attract more public attention.
 
