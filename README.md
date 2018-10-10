@@ -97,3 +97,10 @@ There are 8 partial convolution blocks `PConvBlock` downsampling the images, and
 
 - **Input**: image `(batch, in_channel, height, width)` and mask`(1, 1, height, width)`
 - **Output**: image `(batch, in_channel, height, width)`
+
+## Requirements
+
+- Python 3.5+
+- PyTorch 0.4
+- Numpy
+- OpenCV
