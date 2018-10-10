@@ -9,36 +9,36 @@ from torchvision import models
 
 class PartialConv2d(nn.modules.conv._ConvNd):
 	"""
-	Parameters:
+		Parameters:
 
-	- in_channels (int) – Number of channels in the input image
-	- out_channels (int) – Number of channels produced by the convolution
-	- kernel_size (int or tuple) – Size of the convolving kernel
-	- stride (int or tuple, optional) – Stride of the convolution. Default: 1
-	- padding (int or tuple, optional) – Zero-padding added to both sides of 
-	  the input. Default: 0
-	- dilation (int or tuple, optional) – Spacing between kernel elements. 
-	  Default: 1
-	- groups (int, optional) – Number of blocked connections from input channels 
-	  to output channels. Default: 1
-	- bias (bool, optional) – If True, adds a learnable bias to the output. 
-	  Default: True
-	- device (class torch.device, optional) The device on which the mask tensor
-	  will be allocated. 
-	  Default: device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+		- in_channels (int) – Number of channels in the input image
+		- out_channels (int) – Number of channels produced by the convolution
+		- kernel_size (int or tuple) – Size of the convolving kernel
+		- stride (int or tuple, optional) – Stride of the convolution. Default: 1
+		- padding (int or tuple, optional) – Zero-padding added to both sides of 
+		  the input. Default: 0
+		- dilation (int or tuple, optional) – Spacing between kernel elements. 
+		  Default: 1
+		- groups (int, optional) – Number of blocked connections from input channels 
+		  to output channels. Default: 1
+		- bias (bool, optional) – If True, adds a learnable bias to the output. 
+		  Default: True
+		- device (class torch.device, optional) The device on which the mask tensor
+		  will be allocated. 
+		  Default: device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-	Shape:
+		Shape:
 
-	- Input: image (batch, in_channel, height, width) and mask (1, 1, height, width)
-	- Output: feature map (batch, out_channel, new_height, new_width) and mask 
-	  (1, 1, new_height, new_width)
+		- Input: image (batch, in_channel, height, width) and mask (1, 1, height, width)
+		- Output: feature map (batch, out_channel, new_height, new_width) and mask 
+		  (1, 1, new_height, new_width)
 
-	Variables:
+		Variables:
 
-	- weight (Tensor) – the learnable weights of the module of shape (out_channels, 
-	  in_channels, kernel_size[0], kernel_size[1])
-	- bias (Tensor) – the learnable bias of the module of shape (out_channels)
+		- weight (Tensor) – the learnable weights of the module of shape (out_channels, 
+		  in_channels, kernel_size[0], kernel_size[1])
+		- bias (Tensor) – the learnable bias of the module of shape (out_channels)
 
 	"""
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
@@ -85,27 +85,27 @@ class PartialConv2d(nn.modules.conv._ConvNd):
 
 class PConvBlock(nn.Module):
 	"""
-	The input image and mask are passed to partial convolution and then 
-	partial batch normalization (avoiding the hole region).  
-	The output feature map is then passed to a ReLU layer and MaxPool2d layer; 
-	the mask is downsampled with the same MaxPool2d layer.
+		The input image and mask are passed to partial convolution and then 
+		partial batch normalization (avoiding the hole region).  
+		The output feature map is then passed to a ReLU layer and MaxPool2d layer; 
+		the mask is downsampled with the same MaxPool2d layer.
 
-	Parameters:
+		Parameters:
 
-	- in_channels (int) – Number of channels in the input image
-	- out_channels (int) – Number of channels produced by the convolution
-	- conv_para (dict) – Parameters of partial convolution layer
-	- pool_para (dict) – Paramters of max-pooling layer, see 
-	  class torch.nn.MaxPool2d
-	Shape:
-	- Input: image (batch, in_channel, height, width) and mask 
-	  (1, 1, height, width)g
-	- Output: feature map (batch, out_channel, new_height, new_width) 
-	  and mask (1, 1, new_height, new_width)
-	Variables:
-	- weight (Tensor) – the learnable weights of the module of shape 
-	  (out_channels, in_channels, kernel_size[0], kernel_size[1])
-	- bias (Tensor) – the learnable bias of the module of shape (out_channels)
+		- in_channels (int) – Number of channels in the input image
+		- out_channels (int) – Number of channels produced by the convolution
+		- conv_para (dict) – Parameters of partial convolution layer
+		- pool_para (dict) – Paramters of max-pooling layer, see 
+		  class torch.nn.MaxPool2d
+		Shape:
+		- Input: image (batch, in_channel, height, width) and mask 
+		  (1, 1, height, width)g
+		- Output: feature map (batch, out_channel, new_height, new_width) 
+		  and mask (1, 1, new_height, new_width)
+		Variables:
+		- weight (Tensor) – the learnable weights of the module of shape 
+		  (out_channels, in_channels, kernel_size[0], kernel_size[1])
+		- bias (Tensor) – the learnable bias of the module of shape (out_channels)
 
 	"""
     def __init__(self, in_channel, out_channel, conv_para, pool_para):
@@ -129,24 +129,24 @@ class PConvBlock(nn.Module):
 
 class PConvNet(nn.Module):
 	"""
-	There are 8 partial convolution blocks PConvBlock downsampling the images, 
-	and 8 transposed convolution blocks reconstructing the images. 
-	Each transposed convolution is composed of the following:
+		There are 8 partial convolution blocks PConvBlock downsampling the images, 
+		and 8 transposed convolution blocks reconstructing the images. 
+		Each transposed convolution is composed of the following:
 
-	- torch.nn.ConvTransposed2d functions as reverse of torch.nn.MaxPool 
-	  in the mirroring partial convolution block.
-	- torch.nn.BatchNorm2d 2D Batch Normalization
-	- torch.nn.ConvTransposed2d functions as reverse of PartialConv2d
-	- torch.nn.ReLU ReLU layer
-	- Concatinate the feature maps of the mirroring PConvBlock to the 
-	  output of ReLU layer
-	- Compress the concatinated feature maps using 1x1 convolution 
-	  torch.nn.Conv2d
+		- torch.nn.ConvTransposed2d functions as reverse of torch.nn.MaxPool 
+		  in the mirroring partial convolution block.
+		- torch.nn.BatchNorm2d 2D Batch Normalization
+		- torch.nn.ConvTransposed2d functions as reverse of PartialConv2d
+		- torch.nn.ReLU ReLU layer
+		- Concatinate the feature maps of the mirroring PConvBlock to the 
+		  output of ReLU layer
+		- Compress the concatinated feature maps using 1x1 convolution 
+		  torch.nn.Conv2d
 
-	Shape:
+		Shape:
 
-	- Input: image (batch, in_channel, height, width) and mask(1, 1, height, width)
-	- Output: image (batch, in_channel, height, width)
+		- Input: image (batch, in_channel, height, width) and mask(1, 1, height, width)
+		- Output: image (batch, in_channel, height, width)
 
 	"""
     def __init__(self, n_hidden=8):
@@ -289,8 +289,7 @@ def gram_matrix(feat):
 
 class LpLoss(nn.modules.loss._Loss):
     """
-    Take |predict - target|^p
-    
+    	Take |predict - target|^p
     """
     def __init__(self, p, reduction='elementwise_mean'):
         
