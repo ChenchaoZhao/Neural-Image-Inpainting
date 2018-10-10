@@ -45,9 +45,8 @@ class PartialConv2d(nn.modules.conv._ConvNd):
 	- bias (Tensor) – the learnable bias of the module of shape (out_channels)
 
 	"""
-    def __init__(self, in_channels, out_channels, kernel_size, 
-    	stride=1, padding=0, dilation=1, groups=1, bias=True, 
-    	device=device):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, 
+    			padding=0, dilation=1, groups=1, bias=True, device=device):
         
         with torch.no_grad():
             self.mask_weight = torch.ones(1, # out channel
@@ -192,6 +191,7 @@ class PConvNet(nn.Module):
         self.up_.append((self.tconv1, self.comp1))
         self.tconv0, self.comp0 = self._get_tconv_block(3, n_hidden, para310, para220, activation="sigmoid")
         self.up_.append((self.tconv0, self.comp0))
+    
     def encoder(self, img, msk):
         img_ = [img]
         msk_ = [msk]
@@ -216,7 +216,7 @@ class PConvNet(nn.Module):
     def _get_pconv_block(self, in_channel, out_channel, conv_para, pool_para):
         return PConvBlock(in_channel, out_channel, conv_para, pool_para)
     def _get_tconv_block(self, out_channel, in_channel, tconv_para, upsam_para, 
-    	activation="relu"):
+                         activation="relu"):
         upsample = nn.ConvTranspose2d(in_channel, in_channel, **upsam_para)
         bn = nn.BatchNorm2d(in_channel)
         tconv = nn.ConvTranspose2d(in_channel, out_channel, **tconv_para)
