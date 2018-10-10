@@ -30,8 +30,8 @@ mask = mask.float()
 mask = mask.to(device)
 
 out_img = model(in_img.unsqueeze(0), mask)
-pol_img = polish_output(in_img, out_img[0,:,:,:], mask, 12)
-pol_img = polish_output(in_img, pol_img, mask, 12)
+out_img = polish_output(in_img, out_img[0,:,:,:], mask, 12)
+out_img = polish_output(in_img, out_img, mask, 12)
 
 # output
 imshow(pol_img, brighten=1.5)
