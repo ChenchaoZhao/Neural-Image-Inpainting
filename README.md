@@ -25,6 +25,8 @@ The architecture is a modified version of [UNet](https://arxiv.org/pdf/1505.0459
 class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, device=device)
 ```
 
+![Convential vs Partial Convolution](images/par_conv.png)
+
 ### Parameters:
 
 - **in_channels** ([*int*](https://docs.python.org/3/library/functions.html#int)) – Number of channels in the input image
@@ -78,7 +80,9 @@ The input image and mask are passed to partial convolution and then partial batc
 class PConvNet(n_hidden=8)
 ```
 
-![Network Architecture](images/network_diagram.png)There are 8 partial convolution blocks `PConvBlock` downsampling the images, and 8 transposed convolution blocks reconstructing the images. Each transposed convolution is composed of the following:
+![Network Architecture](images/network_diagram.png)
+
+There are 8 partial convolution blocks `PConvBlock` downsampling the images, and 8 transposed convolution blocks reconstructing the images. Each transposed convolution is composed of the following:
 
 - `torch.nn.ConvTransposed2d` functions as reverse of `torch.nn.MaxPool` in the mirroring partial convolution block.
 - `torch.nn.BatchNorm2d` 2D Batch Normalization
