@@ -7,10 +7,6 @@ from torch.nn.modules.utils import _pair
 import torchvision
 from torchvision import models
 
-
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
-
 class PartialConv2d(nn.modules.conv._ConvNd):
 	"""
 	Parameters:
@@ -45,9 +41,11 @@ class PartialConv2d(nn.modules.conv._ConvNd):
 	- bias (Tensor) – the learnable bias of the module of shape (out_channels)
 
 	"""
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, 
-    			padding=0, dilation=1, groups=1, bias=True, device=device):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1,
+    			padding=0, dilation=1, groups=1, bias=True, device=None):
         
+        if device is None:
+        	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         with torch.no_grad():
             self.mask_weight = torch.ones(1, # out channel
                                           1, # in channel
