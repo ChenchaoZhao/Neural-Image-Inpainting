@@ -27,6 +27,8 @@ class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0,
 
 ![Convential vs Partial Convolution](images/par_conv.png)
 
+
+
 ### Parameters:
 
 - **in_channels** ([*int*](https://docs.python.org/3/library/functions.html#int)) – Number of channels in the input image
