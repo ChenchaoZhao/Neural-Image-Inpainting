@@ -1,5 +1,7 @@
 # Neural Camouflage
 
+I recently generalized this computer vision model to forecast time series ([link to the repo](https://github.com/ChenchaoZhao/FingerprintsOfTheInvisibleHand)).
+
 ## Introduction
 
 Google Earth made sophisticated satellite images accessible to anyone with a digital device and internet connection. However, sensitive locations, which used to be well hidden from the public, were fully exposed. Thus, easy access to satellite images poses a potential threat to national security and personal privacy.
@@ -97,6 +99,18 @@ There are 8 partial convolution blocks `PConvBlock` downsampling the images, and
 
 - **Input**: image `(batch, in_channel, height, width)` and mask`(1, 1, height, width)`
 - **Output**: image `(batch, in_channel, height, width)`
+
+### Examples
+
+The original images are samples from Paris-[SpaceNet](https://spacenetchallenge.github.io)
+
+|          Camouflage           |           Original            |
+| :---------------------------: | :---------------------------: |
+| ![](images/examples/eg4a.png) | ![](images/examples/eg4b.png) |
+| ![](images/examples/eg2a.png) | ![](images/examples/eg2b.png) |
+| ![](images/examples/eg3a.png) | ![](images/examples/eg3b.png) |
+
+
 
 ## Requirements
 
