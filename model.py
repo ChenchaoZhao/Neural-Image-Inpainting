@@ -8,6 +8,7 @@ from torchvision import transforms
 from torchvision import models
 
 
+
 class PartialConv2d(nn.modules.conv._ConvNd):
     """Perform Partial Convolution over the input image with a given mask
 
@@ -45,17 +46,7 @@ class PartialConv2d(nn.modules.conv._ConvNd):
     """
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
-                 padding=0, dilation=1, groups=1, bias=True, device=None):
-        if device is None:
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        with torch.no_grad():
-            self.mask_weight = torch.ones(1,  # out channel
-                                          1,  # in channel
-                                          kernel_size,
-                                          kernel_size,
-                                          dtype=torch.float
-                                          ) / (kernel_size) ** 2
-            self.mask_weight = self.mask_weight.to(device)
+                 padding=0, dilation=1, groups=1, bias=True, eps=0):
 
         kernel_size = _pair(kernel_size)
         stride = _pair(stride)
@@ -64,15 +55,16 @@ class PartialConv2d(nn.modules.conv._ConvNd):
         super(PartialConv2d, self).__init__(
             in_channels, out_channels, kernel_size, stride, padding, dilation,
             False, _pair(0), groups, bias)
+        self.pool = nn.AvgPool2d(kernel_size, stride, padding)
+        self.eps = eps
 
     def forward(self, image, mask):
         assert mask.shape[0] == 1
         assert mask.shape[1] == 1
         assert image.shape[2:] == mask.shape[2:]  # image: (batch, channel, w, h)
         with torch.no_grad():
-            mask_conv = F.conv2d(mask.float(), self.mask_weight, None, self.stride,
-                                 self.padding, self.dilation, self.groups)
-            new_mask = mask_conv > 0
+            mask_conv = self.pool(mask.float())
+            new_mask = mask_conv > self.eps
 
         image_hole = image * mask.float()  # 0 for hole pixels, 1 for non-hole
         image_conv = F.conv2d(image_hole, self.weight, self.bias, self.stride,
