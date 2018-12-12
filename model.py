@@ -120,114 +120,130 @@ class PConvBlock(nn.Module):
         msk = self.pool(msk.float())
         return img, msk
 
+class TConvBlock(nn.Module):
+    """2D Tranposed Convolution Block
+    Upsample (TConv2d)
+    Batch Norm
+    ReLU
+    Dropout
+    TConv1d
+    Compression (1x1 Conv2d) if not last block
+    """
+    def __init__(self, out_channel, in_channel, tconv_para, upsam_para, 
+                 is_last=False, dropout=0):
+        super(TConvBlock, self).__init__()
+        self.upsample = nn.ConvTranspose2d(in_channel, in_channel, **upsam_para)
+        self.bn = nn.BatchNorm2d(in_channel)
+        self.relu = nn.LeakyReLU()
+        self.dropout = nn.Dropout(dropout)
+        self.tconv = nn.ConvTranspose2d(in_channel, out_channel, **tconv_para)
+        self.is_last = is_last
+        if not is_last:
+            self.compress = nn.Conv2d(2*out_channel, out_channel, kernel_size=1)
+        
+    def forward(self, img, mirror=None):
+        """forward pass
+        input: seq, mirror
+        seq.size() == mirror.size()
+        input shape: (batch, channel, seq), i.e. Conv1D convention
+        """
+        img = self.upsample(img) # undo average pooling
+        img = self.bn(img)
+        img = self.relu(img) # nonlinearity
+        img = self.dropout(img)
+        img = self.tconv(img) # transposed conv
+        
+        if mirror is None:
+            if self.is_last:
+                return img
+            else:
+                raise ValueError("Please input mirror seq")
+        img = torch.cat((img, mirror), dim=1) # concat seq and mirror in channel dim
+        img = self.compress(img) # compress: 2*out_channel -> out_channel
+        return img     
 
 class PConvNet(nn.Module):
-    """There are 8 partial convolution blocks PConvBlock downsampling the images, 
-    and 8 transposed convolution blocks reconstructing the images. 
-    Each transposed convolution is composed of the following:
-
-    - torch.nn.ConvTransposed2d functions as reverse of torch.nn.MaxPool 
-      in the mirroring partial convolution block.
-    - torch.nn.BatchNorm2d 2D Batch Normalization
-    - torch.nn.ConvTransposed2d functions as reverse of PartialConv2d
-    - torch.nn.ReLU ReLU layer
-    - Concatinate the feature maps of the mirroring PConvBlock to the 
-      output of ReLU layer
-    - Compress the concatinated feature maps using 1x1 convolution 
-      torch.nn.Conv2d
-
-    Shape:
-
-    - Input: image (batch, in_channel, height, width) and mask(1, 1, height, width)
-    - Output: image (batch, in_channel, height, width)
-
-    """
-
-    def __init__(self, n_hidden=8):
+    def __init__(self, n_hidden):
         super(PConvNet, self).__init__()
         para310 = {"kernel_size": 3, "stride": 1}
         para220 = {"kernel_size": 2, "stride": 2}
         para210 = {"kernel_size": 2, "stride": 1}
-
+        
         self.down_ = []
-        self.pconv0 = self._get_pconv_block(3, n_hidden, para310, para220)
+        self.pconv0 = PConvBlock(3, n_hidden, para310, para220)
         self.down_.append(self.pconv0)
-        self.pconv1 = self._get_pconv_block(n_hidden, n_hidden, para310, para210)
+        self.pconv1 = PConvBlock(n_hidden, n_hidden, para310, para210)
         self.down_.append(self.pconv1)
-        self.pconv2 = self._get_pconv_block(n_hidden, 2 * n_hidden, para310, para220)
+        self.pconv2 = PConvBlock(n_hidden, 2*n_hidden, para310, para220)
         self.down_.append(self.pconv2)
-        self.pconv3 = self._get_pconv_block(2 * n_hidden, 2 * n_hidden, para310, para210)
+        self.pconv3 = PConvBlock(2*n_hidden, 2*n_hidden, para310, para210)
         self.down_.append(self.pconv3)
-        self.pconv4 = self._get_pconv_block(2 * n_hidden, 4 * n_hidden, para310, para220)
+        self.pconv4 = PConvBlock(2*n_hidden, 4*n_hidden, para310, para220)
         self.down_.append(self.pconv4)
-        self.pconv5 = self._get_pconv_block(4 * n_hidden, 8 * n_hidden, para310, para220)
+        self.pconv5 = PConvBlock(4*n_hidden, 8*n_hidden, para310, para220)
         self.down_.append(self.pconv5)
-        self.pconv6 = self._get_pconv_block(8 * n_hidden, 8 * n_hidden, para310, para210)
+        self.pconv6 = PConvBlock(8*n_hidden, 8*n_hidden, para310, para210)
         self.down_.append(self.pconv6)
-        self.pconv7 = self._get_pconv_block(8 * n_hidden, 16 * n_hidden, para310, para220)
+        self.pconv7 = PConvBlock(8*n_hidden, 16*n_hidden, para310, para220)
         self.down_.append(self.pconv7)
         self.up_ = []
-        self.tconv7, self.comp7 = self._get_tconv_block(8 * n_hidden, 16 * n_hidden, para310, para220)
-        self.up_.append((self.tconv7, self.comp7))
-        self.tconv6, self.comp6 = self._get_tconv_block(8 * n_hidden, 8 * n_hidden, para310, para210)
-        self.up_.append((self.tconv6, self.comp6))
-        self.tconv5, self.comp5 = self._get_tconv_block(4 * n_hidden, 8 * n_hidden, para310, para220)
-        self.up_.append((self.tconv5, self.comp5))
-        self.tconv4, self.comp4 = self._get_tconv_block(2 * n_hidden, 4 * n_hidden, para310, para220)
-        self.up_.append((self.tconv4, self.comp4))
-        self.tconv3, self.comp3 = self._get_tconv_block(2 * n_hidden, 2 * n_hidden, para310, para210)
-        self.up_.append((self.tconv3, self.comp3))
-        self.tconv2, self.comp2 = self._get_tconv_block(n_hidden, 2 * n_hidden, para310, para220)
-        self.up_.append((self.tconv2, self.comp2))
-        self.tconv1, self.comp1 = self._get_tconv_block(n_hidden, n_hidden, para310, para210)
-        self.up_.append((self.tconv1, self.comp1))
-        self.tconv0, self.comp0 = self._get_tconv_block(3, n_hidden, para310, para220, activation="sigmoid")
-        self.up_.append((self.tconv0, self.comp0))
-
+        self.tconv7 = TConvBlock(8*n_hidden, 16*n_hidden, para310, para220)
+        self.up_.append(self.tconv7)
+        self.tconv6 = TConvBlock(8*n_hidden, 8*n_hidden, para310, para210)
+        self.up_.append(self.tconv6)
+        self.tconv5 = TConvBlock(4*n_hidden, 8*n_hidden, para310, para220)
+        self.up_.append(self.tconv5)
+        self.tconv4 = TConvBlock(2*n_hidden, 4*n_hidden, para310, para220)
+        self.up_.append(self.tconv4)
+        self.tconv3 = TConvBlock(2*n_hidden, 2*n_hidden, para310, para210)
+        self.up_.append(self.tconv3)
+        self.tconv2 = TConvBlock(n_hidden, 2*n_hidden, para310, para220)
+        self.up_.append(self.tconv2)
+        self.tconv1 = TConvBlock(n_hidden, n_hidden, para310, para210)
+        self.up_.append(self.tconv1)
+        self.tconv0 = TConvBlock(3, n_hidden, para310, para220, is_last=True)
+        self.up_.append(self.tconv0)
+    
     def encoder(self, img, msk):
         img_ = [img]
         msk_ = [msk]
         for pconv in self.down_:
-            img, msk = pconv(img, msk)
+            img, msk = pconv(img, msk)          
             img_.append(img)
             msk_.append(msk.float())
-
         return img_, msk_
-
+    
     def decoder(self, img_, msk_):
+        
+        img_ = img_[::-1]
+        msk_ = msk_[::-1]
+        
         feature_maps_ = []
-        idx = -1
-        img = img_[idx]
-        for (tconv, comp) in self.up_:
-            idx -= 1
-            img = tconv(img)
-            img = torch.cat((img, img_[idx]), dim=1)
-            img = comp(img)
+        img = img_[0]
+        for idx, tconv in enumerate(self.up_):
+            if idx+1 < len(self.up_):
+                img = tconv(img, img_[idx+1])
+            else:
+                img = tconv(img)
+
         return img
-
-    def _get_pconv_block(self, in_channel, out_channel, conv_para, pool_para):
-        return PConvBlock(in_channel, out_channel, conv_para, pool_para)
-
-    def _get_tconv_block(self, out_channel, in_channel, tconv_para, upsam_para,
-                         activation="relu"):
-        upsample = nn.ConvTranspose2d(in_channel, in_channel, **upsam_para)
-        bn = nn.BatchNorm2d(in_channel)
-        tconv = nn.ConvTranspose2d(in_channel, out_channel, **tconv_para)
-        if activation == "relu":
-            act = nn.ReLU()
-        elif activation == "sigmoid":
-            act = nn.Sigmoid()
-        else:
-            raise ValueError("activation function should be relu or sigmoid")
-        # then channel compression
-        comp = nn.Conv2d(2 * out_channel, out_channel, 1)
-        seq_ = nn.Sequential(upsample, bn, tconv, act)
-        return seq_, comp
-
+    
     def forward(self, img, msk):
-        img = img * msk.float()
+        batch, channel, width, height = img.size()
+        img = img.view(batch, channel, -1)
+        msk = msk.view(1,1,-1)
+        self._mean = img[:,:,msk[0,0,:]>0].mean(dim=2, keepdim=True)
+        self._std = 3*(img[:,:,msk[0,0,:]>0].std(dim=2, keepdim=True)+1e-6)
+        img[:,:,msk[0,0,:]>0] = (img[:,:,msk[0,0,:]>0] - self._mean)/(self._std)
+        img = img.view(batch, channel, width, height)
+        msk = msk.view(1,1,width, height)
+        
         img_, msk_ = self.encoder(img, msk)
         out = self.decoder(img_, msk_)
+        
+        out = out.view(batch, channel, -1)
+        out = out*self._std + self._mean
+        out = out.view(batch, channel, width, height)
         return out
 
 
@@ -284,27 +300,3 @@ def gram_matrix(feat):
         v = vector[bdx, :, :]
         gram_mat[bdx, :, :] = torch.mm(v, v.t())
     return gram_mat
-
-
-class LpLoss(nn.modules.loss._Loss):
-    """Take |predict - target|^p"""
-
-    def __init__(self, p, reduction='elementwise_mean'):
-
-        super(LpLoss, self).__init__(reduction=reduction)
-        assert p >= 0
-        self.p = p
-        self.reduction = reduction
-
-    def forward(self, predict, target):
-        assert not target.requires_grad
-        shape_of_input = predict.shape
-        predict = predict.reshape(predict.shape[0], -1)
-        target = target.reshape(target.shape[0], -1)
-        loss = predict - target
-        loss = loss.norm(dim=1, p=self.p) ** self.p
-        if self.reduction == 'elementwise_mean':
-            loss = loss.mean(dim=0)
-        elif self.reduction == 'sum':
-            loss = loss.sum(dim=0)
-        return loss
