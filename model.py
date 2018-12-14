@@ -1,11 +1,7 @@
-import os
-import numpy as np
-import cv2
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.utils import _pair
-from torchvision import transforms
 from torchvision import models
 
 
@@ -74,7 +70,6 @@ class PartialConv2d(nn.modules.conv._ConvNd):
         image_conv = image_conv * mask_conv  # re-weight the non-hole pixels
 
         return image_conv, new_mask
-
 
 class PConvBlock(nn.Module):
     """The input image and mask are passed to partial convolution and then 
@@ -247,35 +242,6 @@ class PConvNet(nn.Module):
         out = out.view(batch, channel, width, height)
         return out
 
-
-class SpacenetDataset(torch.utils.data.Dataset):
-    def __init__(self, train=True):
-        if train:
-            path = "data/train/"
-        else:
-            path = "data/test/"
-
-        self.path = path
-        self.filelist = os.listdir(path)
-        mean_ = [0.2225, 0.3023, 0.2781]
-        std_ = [0.1449, 0.1839, 0.1743]
-        self.transform = transforms.Compose([
-            transforms.Resize((256, 256)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean_, std_)
-        ])
-
-    def __getitem__(self, idx):
-        img = Image.open(self.path + self.filelist[idx])
-        return self.transform(img)
-
-    def __len__(self):
-        return len(self.filelist)
-
-    def __repr__(self):
-        return "Paris {} Images".format(self.__len__())
-
-
 class FeatureMaps(nn.Module):
     def __init__(self, select=['4', '9', '16']):
         """Select pool1 pool2 pool3."""
@@ -291,7 +257,6 @@ class FeatureMaps(nn.Module):
             if name in self.select:
                 features.append(x)
         return features
-
 
 def gram_matrix(feat):
     batch, channel, _, _ = feat.shape

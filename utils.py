@@ -72,24 +72,40 @@ def deconv_up_size(size, kernel_size, stride, padding, outpad=0):
     return (size-1)*stride + kernel_size - 2*padding + outpad
     
 
-def imshow(torch_image, mask=None, brighten=1):
-    img = torch_image.detach().permute((1,2,0))
-    img -= img.min()
-    img /= img.max()
-    if mask is not None:
-        img = (img + (1-mask[0,:,:,:].permute((1,2,0)))*100).clamp(0,1)
-    plt.figure()
-    #print(img.min(), img.max())
-    plt.imshow((img*brighten).clamp(0,1))
-    
 def paint_mask(list_of_coords_radii, size=(256, 256)):
     mask = np.zeros(size)
     for x, y, r in list_of_coords_radii:
         mask = cv2.circle(mask, (x, y), r, 1, -1)
     return 1 - mask.clip(0,1)
+def imshow(torch_image, mask=None, brighten = 1):
     
-def polish_output(image, output, mask, blur=12):
+    img = torch_image.detach().cpu().permute((1,2,0))
+    if mask is not None:
+        mask = mask.cpu()
+    img -= img.min()
+    img /= img.max()
+    if mask is not None:
+        img = (img + (1-mask[0,:,:,:].permute((1,2,0)))*100).clamp(0,1)
+    plt.figure(figsize=(7,7))
+    plt.imshow((img*brighten).clamp(0,1), origin="upper")
+    
+def polish_output(image, output, mask, blur=15):
+    channel, width, height = image.size()
     mask = mask.cpu().numpy()[0,0,:,:]
     mask = cv2.blur(mask, (blur, blur))
-    mask = torch.from_numpy(mask).to(device)
-    return output*(1-mask) + image*mask
+    
+    mask = mask - mask.min()
+    mask = mask/mask.max()
+    mask = torch.from_numpy(mask)
+    _mean = image.view(channel,-1).mean(dim=1, keepdim=True)
+    _std = image.view(channel,-1).std(dim=1, keepdim=True)
+    output = output.view(channel, -1)
+    output = (output - output.mean(1,keepdim=True))/output.std(1,keepdim=True)
+    output = output * _std + _mean
+    output = output.view(channel, width, height)
+    comb = output*(1-mask) + image*mask
+    comb = comb.view(channel, -1)
+    comb = (comb - comb.mean(dim=1, keepdim=True))/comb.std(1, keepdim=True)
+    comb = comb*_std + _mean
+    comb = comb.view(channel, width, height)
+    return comb

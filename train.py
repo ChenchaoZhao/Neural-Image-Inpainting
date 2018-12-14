@@ -1,15 +1,13 @@
 from PIL import Image
 import numpy as np
 import cv2
-
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 from torchvision import models
 import torchvision.transforms as transforms
-
-
 from utils import *
 from model import *
 
@@ -22,45 +20,68 @@ w_style = 0.05
 mask_scale = 15
 batch_size = 10
 
+class SpacenetDataset(torch.utils.data.Dataset):
+    def __init__(self, train=True):
+        if train:
+            path = "data/train/"
+        else:
+            path = "data/test/"
+
+        self.path = path
+        self.filelist = os.listdir(path)
+        mean_ = [0.2225, 0.3023, 0.2781]
+        std_ = [0.1449, 0.1839, 0.1743]
+        self.transform = transforms.Compose([
+            transforms.Resize((256, 256)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean_, std_)
+        ])
+
+    def __getitem__(self, idx):
+        img = Image.open(self.path + self.filelist[idx])
+        return self.transform(img)
+
+    def __len__(self):
+        return len(self.filelist)
+
+    def __repr__(self):
+        return "Paris {} Images".format(self.__len__())
+
 # load train data
 data_train = SpacenetDataset(train=True)
 
 model = PConvNet(n_hidden=8).to(device)
 
-c1_hole = LpLoss(1)
-c1_nonh = LpLoss(1)
-c2_hole = LpLoss(2)
-c2_nonh = LpLoss(2)
+c1_hole = nn.L1Loss()
+c1_nonh = nn.L1Loss()
+c2_hole = nn.MSELoss()
+c2_nonh = nn.MSELoss()
 
 feature_map = FeatureMaps(['4', '9', '16']).to(device).eval()
 
-c1_feat_map_0 = LpLoss(1)
-c1_feat_map_1 = LpLoss(1)
-c1_feat_map_2 = LpLoss(1)
+c1_feat_map_0 = nn.L1Loss()
+c1_feat_map_1 = nn.L1Loss()
+c1_feat_map_2 = nn.L1Loss()
 
-c1_comp_map_0 = LpLoss(1)
-c1_comp_map_1 = LpLoss(1)
-c1_comp_map_2 = LpLoss(1)
+c1_comp_map_0 = nn.L1Loss()
+c1_comp_map_1 = nn.L1Loss()
+c1_comp_map_2 = nn.L1Loss()
 
-c1_style_loss_0 = LpLoss(1)
-c1_style_loss_1 = LpLoss(1)
-c1_style_loss_2 = LpLoss(1)
+c1_style_loss_0 = nn.L1Loss()
+c1_style_loss_1 = nn.L1Loss()
+c1_style_loss_2 = nn.L1Loss()
 
-c1_comp_loss_0 = LpLoss(1)
-c1_comp_loss_1 = LpLoss(1)
-c1_comp_loss_2 = LpLoss(1)
+c1_comp_loss_0 = nn.L1Loss()
+c1_comp_loss_1 = nn.L1Loss()
+c1_comp_loss_2 = nn.L1Loss()
 
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_mean = []
 loss_std = []
 
-weight_ = torch.load("model_weight.ckpt")
-model.load_state_dict(weight_)
-
 train_loader = torch.utils.data.DataLoader(data_train, 
                                            batch_size=batch_size, 
                                            shuffle=True)
-
 
 model.train()
 
@@ -152,6 +173,6 @@ for edx in range(n_epoch):
     loss_std.append(np.std(loss_))
     torch.save(model.state_dict(), "model_weight.ckpt")
     
-    if (edx+1)%25 == 0:
+    if (edx+1)%10 == 0:
         torch.save(model.state_dict(), "model_weight_ep{}.ckpt".format(edx+1))
         
