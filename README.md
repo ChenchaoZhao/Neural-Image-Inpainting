@@ -24,7 +24,7 @@ The architecture is a modified version of [UNet](https://arxiv.org/pdf/1505.0459
 ## Partial Convolution Layer
 
 ```python
-class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, device=device)
+class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, eps=0.1)
 ```
 
 ![Convential vs Partial Convolution](images/par_conv.png)
@@ -41,7 +41,7 @@ class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0,
 - **dilation** ([*int*](https://docs.python.org/3/library/functions.html#int) *or* [*tuple*](https://docs.python.org/3/library/stdtypes.html#tuple)*,* *optional*) – Spacing between kernel elements. Default: 1
 - **groups** ([*int*](https://docs.python.org/3/library/functions.html#int)*,* *optional*) – Number of blocked connections from input channels to output channels. Default: 1
 - **bias** ([*bool*](https://docs.python.org/3/library/functions.html#bool)*,* *optional*) – If `True`, adds a learnable bias to the output. Default: `True`
-- **device** ([*class* `torch.device`](https://pytorch.org/docs/stable/tensor_attributes.html?highlight=device#torch.torch.device), *optional*) The device on which the mask tensor will be allocated. Default: `device = torch.device("cuda" if torch.cuda.is_available() else "cpu")`
+- **eps** ([*float*](https://docs.python.org/3/library/functions.html#float), *optional*) – The confidence threshold for new mask, i.e. `new_mask = AvePool2d(mask.float())>eps`. Default: `eps=0.1`
 
 ### Shape:
 
@@ -56,7 +56,7 @@ class PartialConv2d(in_channels, out_channels, kernel_size, stride=1, padding=0,
 ## Partial Convolution Block
 
 ```python
-class PConvBlock(in_channel, out_channel, conv_para, pool_para)
+class PConvBlock(in_channel, out_channel, conv_para, pool_para, eps=0.1)
 ```
 
 The input image and mask are passed to partial convolution and then partial batch normalization (avoiding the hole region).  The output feature map is then passed to a `ReLU` layer and `MaxPool2d` layer; the mask is downsampled with the same `MaxPool2d` layer.
