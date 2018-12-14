@@ -235,7 +235,7 @@ class PConvNet(nn.Module):
         msk = msk.view(1,1,-1)
         self._mean = img[:,:,msk[0,0,:]>0].mean(dim=2, keepdim=True)
         self._std = 3*(img[:,:,msk[0,0,:]>0].std(dim=2, keepdim=True)+1e-6)
-        img[:,:,msk[0,0,:]>0] = (img[:,:,msk[0,0,:]>0] - self._mean)/(self._std)
+        img = (img - self._mean)/(self._std)
         img = img.view(batch, channel, width, height)
         msk = msk.view(1,1,width, height)
         
@@ -251,9 +251,9 @@ class PConvNet(nn.Module):
 class SpacenetDataset(torch.utils.data.Dataset):
     def __init__(self, train=True):
         if train:
-            path = "data/test/"
-        else:
             path = "data/train/"
+        else:
+            path = "data/test/"
 
         self.path = path
         self.filelist = os.listdir(path)
