@@ -110,7 +110,6 @@ The original images are samples from Paris-[SpaceNet](https://spacenetchallenge.
 | ![](images/examples/eg2a.png) | ![](images/examples/eg2b.png) |
 | ![](images/examples/eg3a.png) | ![](images/examples/eg3b.png) |
 
-The demo can be found at this [Google Colab Notebook](https://colab.research.google.com/drive/1RyOq-t0XUkRxUPo0zyWGoqadWzXlcBb2).
 
 ## Requirements
 
